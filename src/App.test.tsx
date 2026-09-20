@@ -1,12 +1,19 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import { render } from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
+import { Provider } from 'react-redux';
+
 import App from './App';
+import { store } from './store/store';
 
 test('renders Employee Management Portal', () => {
-  render(<App />);
+  const { getByText } = render(
+    <Provider store={store}>
+      <App />
+    </Provider>
+  );
 
   expect(
-    screen.getByText('Employee Management Portal')
+    getByText('Employee Management Portal')
   ).toBeInTheDocument();
 });

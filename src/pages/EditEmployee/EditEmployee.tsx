@@ -1,223 +1,165 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
   Box,
-  Button,
   Paper,
-  TextField,
-  Typography
+  Typography,
+  CircularProgress
 } from '@mui/material';
 
+import { useParams } from 'react-router-dom';
+
 import { Employee } from '../../types/Employee';
+import { useAppContext } from '../../context/AppContext';
+
 import {
-  getEmployees,
-  updateEmployee
-} from '../../services/employeeService';
+  useAppDispatch,
+  useAppSelector
+} from '../../store/hooks';
+
+import {
+  fetchEmployees,
+  editEmployee
+} from '../../store/slices/employeeSlice';
+
+import EmployeeForm from '../../components/EmployeeForm/EmployeeForm';
+
+interface RouteParams {
+  id: string;
+}
 
 const EditEmployee: React.FC = () => {
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [selectedId, setSelectedId] = useState<number | ''>('');
-  const [employee, setEmployee] = useState<Employee>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    department: ''
-  });
 
-	const [message, setMessage] = useState<string>('');
-	const [error, setError] = useState<string>('');
-	const [validationErrors, setValidationErrors] = useState<{
-	  firstName?: string;
-	  lastName?: string;
-	  email?: string;
-	  department?: string;
-	}>({});
+  const { showNotification } = useAppContext();
+  const dispatch = useAppDispatch();
+
+  const { id } = useParams<RouteParams>();
+
+  const {
+    employees,
+    loading,
+    error
+  } = useAppSelector(
+    (state) => state.employees
+  );
+
+  const [selectedEmployee, setSelectedEmployee] =
+    useState<Employee | undefined>(undefined);
+
+  const [employeesLoaded, setEmployeesLoaded] =
+    useState<boolean>(false);
 
   useEffect(() => {
-    loadEmployees();
-  }, []);
-
-  const loadEmployees = async () => {
-    try {
-      const data = await getEmployees();
-      setEmployees(data);
-    } catch (err) {
-      setError('Unable to load employees.');
+    if (employees.length === 0) {
+      dispatch(fetchEmployees());
+    } else {
+      setEmployeesLoaded(true);
     }
-  };
+  }, [dispatch, employees.length]);
 
-  const handleEmployeeSelect = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const id = Number(event.target.value);
+  useEffect(() => {
+    if (!id || employees.length === 0) {
+      return;
+    }
 
-    setSelectedId(id);
+    const employeeId = Number(id);
 
-    const selectedEmployee = employees.find(
-      (item) => item.id === id
+    const employee = employees.find(
+      (item) => item.id === employeeId
     );
 
-    if (selectedEmployee) {
-      setEmployee({
-        firstName: selectedEmployee.firstName,
-        lastName: selectedEmployee.lastName,
-        email: selectedEmployee.email,
-        department: selectedEmployee.department
-      });
+    setSelectedEmployee(employee);
+    setEmployeesLoaded(true);
+
+  }, [id, employees]);
+
+  const handleSubmit = async (
+    employee: Employee
+  ): Promise<void> => {
+
+    if (
+      !selectedEmployee ||
+      selectedEmployee.id === undefined
+    ) {
+      throw new Error(
+        'Employee not found.'
+      );
     }
-  };
 
-  const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { name, value } = event.target;
-
-    setEmployee({
+    const updatedEmployee: Employee = {
       ...employee,
-      [name]: value
-    });
+      id: selectedEmployee.id
+    };
+
+    await dispatch(
+      editEmployee(updatedEmployee)
+    ).unwrap();
+
+    setSelectedEmployee(updatedEmployee);
+
+    showNotification(
+      'Employee updated successfully.'
+    );
   };
 
-const handleSubmit = async (
-  event: React.FormEvent
-) => {
-  event.preventDefault();
-
-  if (!selectedId) {
-    setError('Please select an employee.');
-    return;
+  if (loading && !employeesLoaded) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginTop: 5
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
   }
-
-  const errors: {
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    department?: string;
-  } = {};
-
-  if (!employee.firstName.trim()) {
-    errors.firstName = 'First Name is required.';
-  }
-
-  if (!employee.lastName.trim()) {
-    errors.lastName = 'Last Name is required.';
-  }
-
-  if (!employee.email.trim()) {
-    errors.email = 'Email is required.';
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(employee.email)) {
-    errors.email = 'Enter a valid email address.';
-  }
-
-  if (!employee.department.trim()) {
-    errors.department = 'Department is required.';
-  }
-
-  setValidationErrors(errors);
-
-  if (Object.keys(errors).length > 0) {
-    return;
-  }
-
-  try {
-    await updateEmployee(selectedId, employee);
-
-    setMessage('Employee updated successfully.');
-    setError('');
-  } catch (err) {
-    setError('Unable to update employee.');
-    setMessage('');
-  }
-};
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 600, margin: '30px auto', padding: 2 }}>
+    <Box
+      sx={{
+        width: '100%',
+        maxWidth: 600,
+        margin: '30px auto',
+        padding: 2
+      }}
+    >
       <Paper sx={{ padding: 3 }}>
-        <Typography variant="h4" gutterBottom>
+
+        <Typography
+          variant="h4"
+          gutterBottom
+        >
           Edit Employee
         </Typography>
 
-        {message && (
-          <Alert severity="success">{message}</Alert>
-        )}
-
         {error && (
-          <Alert severity="error">{error}</Alert>
+          <Typography
+            color="error"
+            sx={{ marginBottom: 2 }}
+          >
+            {error}
+          </Typography>
         )}
 
-        <TextField
-          select
-          fullWidth
-          label="Select Employee"
-          value={selectedId}
-          onChange={handleEmployeeSelect}
-          margin="normal"
-          SelectProps={{
-            native: true
-          }}
-        >
-          <option value="">Select Employee</option>
+        {employeesLoaded && !selectedEmployee && (
+          <Typography color="error">
+            Employee not found.
+          </Typography>
+        )}
 
-          {employees.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.firstName} {item.lastName}
-            </option>
-          ))}
-        </TextField>
+        {selectedEmployee && (
+          <Box sx={{ marginTop: 2 }}>
+            <EmployeeForm
+              key={selectedEmployee.id}
+              initialEmployee={selectedEmployee}
+              buttonText="Update Employee"
+              resetAfterSubmit={false}
+              onSubmit={handleSubmit}
+            />
+          </Box>
+        )}
 
-        <form onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            label="First Name"
-            name="firstName"
-            value={employee.firstName}
-            onChange={handleChange}
-            margin="normal"
-			error={!!validationErrors.firstName}
-			helperText={validationErrors.firstName}
-          />
-
-          <TextField
-            fullWidth
-            label="Last Name"
-            name="lastName"
-            value={employee.lastName}
-            onChange={handleChange}
-            margin="normal"
-			error={!!validationErrors.lastName}
-			helperText={validationErrors.lastName}
-          />
-
-          <TextField
-            fullWidth
-            label="Email"
-            name="email"
-            value={employee.email}
-            onChange={handleChange}
-            margin="normal"
-			error={!!validationErrors.email}
-			helperText={validationErrors.email}
-          />
-
-          <TextField
-            fullWidth
-            label="Department"
-            name="department"
-            value={employee.department}
-            onChange={handleChange}
-            margin="normal"
-			error={!!validationErrors.department}
-			helperText={validationErrors.department}
-          />
-
-          <Button
-            type="submit"
-            variant="contained"
-            sx={{ marginTop: 2 }}
-          >
-            Update Employee
-          </Button>
-        </form>
       </Paper>
     </Box>
   );
