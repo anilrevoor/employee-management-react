@@ -1,139 +1,257 @@
-# Employee Management Portal
+# CManagement Portal
 
-A responsive Employee Management Portal built using React, TypeScript, Axios, and Material UI. The application communicates with a Spring Boot REST API for employee management.
+## Overview
 
-## Technologies Used
+CManagement Portal is the React frontend application for the Employee Management system.
 
-* React 17
+It provides a user interface for employee management, authentication, adding employees, editing employees, deleting employees, notifications, and state management.
+
+## Technology Stack
+
+* React 17.0.2
 * TypeScript
-* Axios
-* Material UI
-* React Router
-* Java 21
-* Spring Boot
-* Spring Data JPA
-* H2 / MySQL
-* REST API
+* React Router DOM 5.3.4
+* Material UI 5.15.20
+* Axios 0.27.2
+* Redux Toolkit
+* React Redux
+* Create React App
 
-## Features
+## Application URL
 
-* View all employees
-* Add a new employee
-* Edit an existing employee
-* Delete an employee
-* Client-side input validation
-* Email format validation
-* Success and error messages
-* Responsive user interface
-* REST API integration using Axios
-* Navigation using React Router
+Frontend:
+
+`http://localhost:3000`
+
+## Available Pages
+
+| Page          | URL      |
+| ------------- | -------- |
+| Employee List | `/`      |
+| Add Employee  | `/add`   |
+| Edit Employee | `/edit`  |
+| Login         | `/login` |
+
+## Application Flow
+
+```text
+User
+ |
+ v
+React Frontend :3000
+ |
+ v
+Spring Cloud Gateway :8081
+ |
+ v
+Spring Boot Backend :8080
+ |
+ v
+Database
+```
+
+## Authentication
+
+The frontend uses JWT authentication.
+
+Login flow:
+
+```text
+Login Page
+     |
+     v
+POST /api/v1/auth/login
+     |
+     v
+JWT Token + Role
+     |
+     v
+localStorage
+     |
+     v
+Protected API Requests
+```
+
+The JWT token is sent with API requests using:
+
+```text
+Authorization: Bearer <JWT_TOKEN>
+```
+
+Logout removes the authentication information from localStorage.
+
+## Employee Management
+
+The frontend provides functionality to:
+
+* View employees
+* Add employees
+* Edit employees
+* Delete employees
+* Display notifications
+* Handle API errors
+
+## Redux Toolkit
+
+Redux Toolkit is used for centralized employee state management.
+
+The employee Redux slice handles:
+
+* Fetch employees
+* Add employee
+* Update employee
+* Delete employee
+* Loading state
+* Error state
+
+Asynchronous API operations are handled using Redux Toolkit async actions.
+
+## Reusable Components
+
+The application uses reusable React concepts including:
+
+* Reusable components
+* Custom hooks
+* React Context
+* Notification component
+* Shared application state
+* API service functions
+
+## Axios
+
+Axios is used for communication with the backend REST APIs.
+
+Example API flow:
+
+```text
+React Component
+      |
+      v
+Redux Action
+      |
+      v
+Axios API Call
+      |
+      v
+Gateway
+      |
+      v
+Spring Boot Backend
+```
+
+## Backend URLs
+
+Direct backend:
+
+`http://localhost:8080`
+
+Gateway:
+
+`http://localhost:8081`
+
+Versioned employee API:
+
+`http://localhost:8081/api/v1/employees`
+
+## Testing
+
+Run frontend tests:
+
+```bash
+npm test
+```
+
+The application includes React component testing.
+
+## Production Build
+
+Create a production build:
+
+```bash
+npm run build
+```
+
+The generated production files are available under:
+
+```text
+build/
+```
+
+## Development Environment
+
+The existing project environment uses:
+
+* Node.js 13.14.0
+* npm 6.14.4
+
+The current dependency versions should be kept stable unless a deliberate upgrade is required.
+
+## Architecture
+
+```text
++----------------------------+
+| React Employee Portal      |
+| http://localhost:3000      |
++-------------+--------------+
+              |
+              v
++----------------------------+
+| Spring Cloud Gateway       |
+| http://localhost:8081      |
++-------------+--------------+
+              |
+              v
++----------------------------+
+| Spring Boot Backend        |
+| http://localhost:8080      |
++-------------+--------------+
+              |
+              v
++----------------------------+
+| H2 Database                |
++----------------------------+
+```
+
+## Main Features
+
+* Employee listing
+* Add employee
+* Edit employee
+* Delete employee
+* JWT login
+* Logout
+* Role-based UI behavior
+* Redux Toolkit state management
+* Async API calls
+* Reusable components
+* Context API
+* Notifications
+* Error handling
+* Responsive Material UI interface
 
 ## Project Structure
 
-```text
-cmanagement-portal
-├── public
-├── src
-│   ├── components
-│   ├── pages
-│   │   ├── EmployeeList
-│   │   ├── AddEmployee
-│   │   └── EditEmployee
-│   ├── services
-│   │   └── employeeService.ts
-│   ├── types
-│   │   └── Employee.ts
-│   ├── App.tsx
-│   ├── App.test.tsx
-│   ├── index.tsx
-│   └── index.css
-├── package.json
-├── package-lock.json
-└── README.md
-```
-
-## Backend API
-
-The React application communicates with the Spring Boot backend.
-
-Base URL:
+Typical structure:
 
 ```text
-http://localhost:8080/api/employees
+cmanagement-portal/
+ |
+ +-- src/
+ |    |
+ |    +-- components/
+ |    +-- pages/
+ |    +-- hooks/
+ |    +-- context/
+ |    +-- redux/
+ |    +-- services/
+ |    +-- App.tsx
+ |    +-- index.tsx
+ |
+ +-- public/
+ +-- package.json
 ```
 
-### Get Employees
-
-```text
-GET /api/employees
-```
-
-Returns all employees.
-
-### Get Employee
-
-```text
-GET /api/employees/{id}
-```
-
-Returns an employee by ID.
-
-### Create Employee
-
-```text
-POST /api/employees
-```
-
-Example request:
-
-```json
-{
-  "firstName": "John",
-  "lastName": "Doe",
-  "email": "john.doe@example.com",
-  "department": "IT"
-}
-```
-
-### Update Employee
-
-```text
-PUT /api/employees/{id}
-```
-
-Example request:
-
-```json
-{
-  "firstName": "John",
-  "lastName": "Smith",
-  "email": "john.smith@example.com",
-  "department": "Engineering"
-}
-```
-
-### Delete Employee
-
-```text
-DELETE /api/employees/{id}
-```
-
-Deletes the employee with the specified ID.
-
-## Prerequisites
-
-* Node.js
-* npm
-* Java 21
-* Spring Boot backend running on port 8080
-
-## Installation
-
-Open a command prompt in the project directory:
-
-```text
-C:\softwares\employee-management\cmanagement-portal
-```
+## Running the Application
 
 Install dependencies:
 
@@ -141,77 +259,33 @@ Install dependencies:
 npm install
 ```
 
-## Running the Application
-
-Start the React application:
+Start development server:
 
 ```bash
 npm start
 ```
 
-The application will normally be available at:
+Open:
+
+`http://localhost:3000`
+
+## Complete System
 
 ```text
-http://localhost:3000
-```
+                 React Frontend
+                     :3000
+                       |
+                       v
+              Spring Cloud Gateway
+                     :8081
+                       |
+                       v
+              Spring Boot Backend
+                     :8080
+                       |
+                       v
+                  H2 Database
 
-Make sure the Spring Boot backend is running before using employee management features.
-
-## Testing
-
-Run the React unit tests:
-
-```bash
-npm test -- --watchAll=false
-```
-
-The project currently includes a test verifying that the Employee Management Portal is rendered successfully.
-
-## Production Build
-
-Create an optimized production build:
-
-```bash
-npm run build
-```
-
-The generated production files are placed in:
-
-```text
-build/
-```
-
-## Validation
-
-The application validates:
-
-* First Name is required
-* Last Name is required
-* Email is required
-* Email must have a valid format
-* Department is required
-* An employee must be selected before updating
-
-## Browser Access
-
-Frontend:
-
-```text
-http://localhost:3000
-```
-
-Backend:
-
-```text
-http://localhost:8080
-```
-
-## Notes
-
-The frontend is configured to communicate with the Spring Boot API running locally on port 8080.
-
-CORS is configured in the backend to allow requests from:
-
-```text
-http://localhost:3000
+              Spring Cloud Config
+                     :8888
 ```
